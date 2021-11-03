@@ -29,5 +29,7 @@ int main()
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
 
+    IS_LIST_ERROR_(&list, ListDtor(&list));
+
     return LIST_NO_ERROR;
 }

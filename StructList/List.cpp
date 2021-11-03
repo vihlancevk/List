@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "List.h"
 
+//!TODO FindFreePisition (за O(1), если использовать ещё один список свободных мест)
+
 #define DEBUG
 
 ListErrorCode listStatus = LIST_NO_ERROR;
@@ -61,7 +63,7 @@ ListErrorCode GetListError(const List_t *list)
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListCtor(List_t *list, size_t capacity)
+ListErrorCode ListCtor(List_t *list, const size_t capacity)
 {
     assert(list != nullptr);
 
@@ -104,6 +106,11 @@ ListErrorCode ListCtor(List_t *list, size_t capacity)
 ListErrorCode ListDtor(List_t *list)
 {
     assert(list != nullptr);
+
+    if (list->status == LIST_DESTRUCTED)
+    {
+        return LIST_DESTRUCTED_ERROR;
+    }
 
     list->status = LIST_DESTRUCTED;
     list->capacity = POISON;
@@ -168,7 +175,7 @@ static size_t FindFreePosition(const List_t *list)
     return 0;
 }
 
-ListErrorCode ListInsert(List_t *list, structList_t elem, size_t place)
+ListErrorCode ListInsert(List_t *list, const structList_t elem, const size_t place)
 {
     ASSERT_OK_(list);
 
@@ -213,7 +220,7 @@ ListErrorCode ListInsert(List_t *list, structList_t elem, size_t place)
     return LIST_NO_ERROR;
 }
 
-static size_t FindPrevPosition(const List_t *list, size_t place)
+static size_t FindPrevPosition(const List_t *list, const size_t place)
 {
     ASSERT_OK_(list);
 

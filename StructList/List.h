@@ -53,14 +53,14 @@ struct List_t
 
 ListErrorCode GetListError(const List_t *list);
 
-ListErrorCode ListCtor(List_t *list, size_t capacity);
+ListErrorCode ListCtor(List_t *list, const size_t capacity);
 
 ListErrorCode ListDtor(List_t *list);
 
 void ListDump(const List_t *list);
 
-ListErrorCode ListInsert(List_t *list, structList_t elem, size_t place);
+ListErrorCode ListInsert(List_t *list, const structList_t elem, const size_t place);
 
-ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place);
+ListErrorCode ListRemove(List_t *list, structList_t *elem, const size_t place);
 
 #endif // LIST_H_
