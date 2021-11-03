@@ -5,13 +5,58 @@
 
 #define DEBUG
 
+ListErrorCode listStatus = LIST_NO_ERROR;
+
+#define ASSERT_OK_(list)                 \
+    do                                   \
+    {                                    \
+        assert(list != nullptr);         \
+        listStatus = GetListError(list); \
+        if (listStatus != LIST_NO_ERROR) \
+        {                                \
+            return listStatus;           \
+        }                                \
+    } while(0)
+
 const int LIST_ARRAY_NEXT_FREE = -1;
 const size_t POISON = 1000 - 7;
 const void *const ERR_PTR = (void*)666;
 
-ListErrorCode GetListError(List_t *list)
+static int IsListCycle(const List_t *list)
 {
     assert(list != nullptr);
+
+    int slow = list->head;
+    int fast = list->head;
+
+    while (fast != 0 && list->next[fast] != 0)
+    {
+        slow = list->next[slow];
+        fast = list->next[fast];
+        fast = list->next[fast];
+
+        if (slow == fast)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+ListErrorCode GetListError(const List_t *list)
+{
+    assert(list != nullptr);
+
+    if (list->status != LIST_CONSTRUCTED)
+    {
+        return LIST_USE_NOT_CONSTRUCTED;
+    }
+
+    if (IsListCycle(list))
+    {
+        return LIST_HAVE_CYCLE;
+    }
 
     return LIST_NO_ERROR;
 }
@@ -25,6 +70,7 @@ ListErrorCode ListCtor(List_t *list, size_t capacity)
         return LIST_CONSTRUCTED_ERROR;
     }
 
+    list->status = LIST_CONSTRUCTED;
     list->capacity = capacity + 1;
     list->size = 0;
 
@@ -39,6 +85,7 @@ ListErrorCode ListCtor(List_t *list, size_t capacity)
     {
         return LIST_NEXT_CALLOC_ERROR;
     }
+
     for (size_t i = 1; i < list->capacity; i++)
     {
         list->next[i] = LIST_ARRAY_NEXT_FREE;
@@ -58,11 +105,6 @@ ListErrorCode ListDtor(List_t *list)
 {
     assert(list != nullptr);
 
-    if (list->status != LIST_CONSTRUCTED)
-    {
-        return LIST_DESTRUCTED_ERROR;
-    }
-
     list->status = LIST_DESTRUCTED;
     list->capacity = POISON;
     list->size = POISON;
@@ -76,7 +118,7 @@ ListErrorCode ListDtor(List_t *list)
     return LIST_NO_ERROR;
 }
 
-void ListDump(List_t *list)
+void ListDump(const List_t *list)
 {
     assert(list != nullptr);
 
@@ -87,7 +129,6 @@ void ListDump(List_t *list)
     printf("tail : %lu\n", list->tail);
 
     size_t i = 0;
-
     printf("%4s : ", "i");
     for (i = 0; i < list->capacity; i++)
     {
@@ -95,28 +136,31 @@ void ListDump(List_t *list)
     }
     printf("\n\n");
 
-    #define PRINT_LIST_ARRAY_(specifier, arrayName)        \
-        printf("%4s : ", #arrayName);                      \
-        for (i = 0; i < list->capacity; i++)               \
-        {                                                  \
-            printf("%3"#specifier" ", list->arrayName[i]); \
-        }                                                  \
-        printf("\n\n");
+    #define PRINT_LIST_ARRAY_(specifier, arrayName)            \
+        do{                                                    \
+            printf("%4s : ", #arrayName);                      \
+            for (i = 0; i < list->capacity; i++)               \
+            {                                                  \
+                printf("%3"#specifier" ", list->arrayName[i]); \
+            }                                                  \
+            printf("\n\n");                                    \
+        } while(0)
 
-    PRINT_LIST_ARRAY_(d, data)
-    PRINT_LIST_ARRAY_(d, next)
+    PRINT_LIST_ARRAY_(d, data);
+    PRINT_LIST_ARRAY_(d, next);
 
     printf("--------------------------------------------------------------------------------");
 }
 
-static size_t FindFreePosition(List_t *list)
+static size_t FindFreePosition(const List_t *list)
 {
-    assert(list != nullptr);
+    ASSERT_OK_(list);
 
     for (size_t i = 1; i < list->capacity; i++)
     {
         if (list->next[i] == LIST_ARRAY_NEXT_FREE)
         {
+            ASSERT_OK_(list);
             return i;
         }
     }
@@ -126,11 +170,11 @@ static size_t FindFreePosition(List_t *list)
 
 ListErrorCode ListInsert(List_t *list, structList_t elem, size_t place)
 {
-    assert(list != nullptr);
+    ASSERT_OK_(list);
 
     if (list->size >= list->capacity)
     {
-        return LIST_IS_EMPTY;
+        return LIST_CAPACITY_LESS_SIZE;
     }
 
     if (list->next[place] == LIST_ARRAY_NEXT_FREE)
@@ -164,12 +208,14 @@ ListErrorCode ListInsert(List_t *list, structList_t elem, size_t place)
         ListDump(list);
     #endif // DEBUG
 
+    ASSERT_OK_(list);
+
     return LIST_NO_ERROR;
 }
 
-static size_t FindPrevPosition(List_t *list, size_t place)
+static size_t FindPrevPosition(const List_t *list, size_t place)
 {
-    assert(list != nullptr);
+    ASSERT_OK_(list);
 
     size_t numElem = list->head;
 
@@ -178,7 +224,7 @@ static size_t FindPrevPosition(List_t *list, size_t place)
         return 0;
     }
 
-    while (list->next[numElem] != place)
+    while (list->next[numElem] != (int)place)
     {
         numElem = list->next[numElem];
     }
@@ -188,7 +234,8 @@ static size_t FindPrevPosition(List_t *list, size_t place)
 
 ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place)
 {
-    assert(list != nullptr);
+    ASSERT_OK_(list);
+
     assert(elem != nullptr);
 
     if (list->size <= 0)
@@ -235,6 +282,8 @@ ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place)
     #ifdef DEBUG
         ListDump(list);
     #endif // DEBUG
+
+    ASSERT_OK_(list);
 
     return LIST_NO_ERROR;
 }
