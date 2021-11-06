@@ -5,31 +5,48 @@ int main()
 {
     List_t list = {};
 
-    size_t capacity = 100;
+    size_t capacity = 5;
     structList_t elem = 0;
     ListErrorCode listErrorIn = LIST_NO_ERROR;
 
     IS_LIST_ERROR_(&list, ListCtor(&list, capacity));
-    IS_LIST_ERROR_(&list, ListInsert(&list, 1, list.tail));
-    for (size_t i = 1; i < list.capacity - 1; i++)
+
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for ListInsertAfter(...)
+    /*for (size_t i = 0; i < list.capacity - 3; i++)
     {
-        IS_LIST_ERROR_(&list,ListInsert(&list, i * 10, i));
+        IS_LIST_ERROR_(&list,ListInsertAfter(&list, (i + 1) * 10, i));
     }
 
-    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, list.head));
-    printf("elem : %d\n", elem);
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, 40, 2));
 
-    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, list.tail));
-    printf("elem : %d\n", elem);
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, 50, 2));*/
+    //--------------------------------------------------------------------------------
 
-    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 5));
-    printf("elem : %d\n", elem);
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for ListInsertBefor(...)
+    /*IS_LIST_ERROR_(&list, ListInsertAfter(&list, 10, list.tail));
+    IS_LIST_ERROR_(&list, ListInsertBefore(&list, 20, list.head));
+    IS_LIST_ERROR_(&list, ListInsertBefore(&list, 30, 1));*/
+    //--------------------------------------------------------------------------------
 
-    IS_LIST_ERROR_(&list, ListInsert(&list, elem, 4));
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for ListRemove(...)
+    /*for (size_t i = 0; i < list.capacity - 3; i++)
+    {
+        IS_LIST_ERROR_(&list, ListInsertAfter(&list, (i + 1) * 10, i));
+    }
+    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 1));
+    IS_LIST_ERROR_(&list, ListInsertBefore(&list, elem, 2));
+    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 2));
+    IS_LIST_ERROR_(&list, ListInsertBefore(&list, elem, 3));
+    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 3));
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, elem, 2));*/
+    //-------------------------------------------------------------------------------
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
 
-    IS_LIST_ERROR_(&list, ListDtor(&list));
+    //IS_LIST_ERROR_(&list, ListDtor(&list));
 
     return LIST_NO_ERROR;
 }

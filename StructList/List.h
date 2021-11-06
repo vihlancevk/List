@@ -11,7 +11,7 @@
         {                                 \
             /*TODO SMTH*/                 \
             ListDtor(list);               \
-            return listError;             \
+            return listErrorIn;           \
         }                                 \
     } while(0)
 
@@ -31,11 +31,13 @@ enum ListErrorCode
     LIST_DESTRUCTED_ERROR,
     LIST_DATA_CALLOC_ERROR,
     LIST_NEXT_CALLOC_ERROR,
+    LIST_PREV_CALLOC_ERROR,
     LIST_USE_NOT_CONSTRUCTED,
-    LIST_CAPACITY_LESS_SIZE,
+    LIST_NO_FREE_PLACE,
     LIST_IS_EMPTY,
     LIST_HAVE_CYCLE,
     LIST_INSERT_UNCORRECT_PLACE,
+    LIST_INSERT_BEFORE_UNCORRECT_USE,
     LIST_REMOVE_UNCORRECT_PLACE,
     LIST_ARRAY_NEXT_NO_FREE_ELEMENT,
 };
@@ -47,8 +49,10 @@ struct List_t
     size_t size;
     structList_t *data;
     int *next;
+    int *prev;
     size_t head;
     size_t tail;
+    size_t free;
 };
 
 ListErrorCode GetListError(const List_t *list);
@@ -59,7 +63,9 @@ ListErrorCode ListDtor(List_t *list);
 
 void ListDump(const List_t *list);
 
-ListErrorCode ListInsert(List_t *list, const structList_t elem, const size_t place);
+ListErrorCode ListInsertAfter(List_t *list, const structList_t elem, const size_t place);
+
+ListErrorCode ListInsertBefore(List_t *list, const structList_t elem, const size_t place);
 
 ListErrorCode ListRemove(List_t *list, structList_t *elem, const size_t place);
 
