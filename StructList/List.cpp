@@ -302,6 +302,7 @@ ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_
     else
     {
         list->data[list->data[free].next].prev = free;
+        list->isSorted = 0;
     }
     list->data[free].elem = elem;
     list->size = list->size + 1;
@@ -352,6 +353,7 @@ ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size
     }
     list->data[free].elem = elem;
     list->size = list->size + 1;
+    list->isSorted = 0;
 
     #ifdef DEBUG
         ListDump(list);
@@ -395,6 +397,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         {
             list->head = list->data[place].next;
         }
+        list->isSorted = 0;
     }
     else
     {
@@ -407,6 +410,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         else
         {
             list->data[list->data[place].next].prev = list->data[place].prev;
+            list->isSorted = 0;
         }
     }
 
