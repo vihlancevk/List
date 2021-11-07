@@ -22,7 +22,8 @@ const int LIST_PLACE_FREE = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const size_t POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
-const char *LIST_LOG_FILE = "listLog.html";
+const char *LIST_LOG_FILE = "listLog.txt";
+const char *LIST_GRAPH_VIZ = "graphviz.gv";
 
 static int IsListCycle(const List_t *list)
 {
@@ -63,9 +64,12 @@ ListErrorCode GetListError(const List_t *list)
     return LIST_NO_ERROR;
 }
 
-void ClearListLogFile()
+void ClearListLogAndGraphVizFile()
 {
     FILE *logFile = fopen(LIST_LOG_FILE, "w ");
+    fclose(logFile);
+    FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
+    fclose(graphViz);
 }
 
 ListErrorCode ListCtor(List_t *list, const size_t capacity)
@@ -77,7 +81,7 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
         return LIST_CONSTRUCTED_ERROR;
     }
 
-    ClearListLogFile();
+    ClearListLogAndGraphVizFile();
 
     list->status = LIST_CONSTRUCTED;
     list->isSorted = 1;
@@ -143,12 +147,12 @@ ListErrorCode ListDump(const List_t *list)
         return LIST_DUMP_OPEN_LOG_FILE_ERROR;
     }
 
-    fprintf(logFile, "--------------------------------------------------------------------------------<br>");
+    fprintf(logFile, "--------------------------------------------------------------------------------\n\n");
 
-    fprintf(logFile, "<font color=\"purple\">[LIST_DUMP]</font><br><br>");
+    fprintf(logFile, "[LIST_DUMP]\n\n");
 
-    fprintf(logFile, "isSorted : %d<br>", list->isSorted);
-    fprintf(logFile, "size : %lu<br><br>", list->size);
+    fprintf(logFile, "isSorted : %d\n", list->isSorted);
+    fprintf(logFile, "size : %lu\n\n", list->size);
 
     size_t i = 0;
     fprintf(logFile, "%4s : ", "i");
@@ -156,7 +160,7 @@ ListErrorCode ListDump(const List_t *list)
     {
         fprintf(logFile, "%3lu ", i);
     }
-    fprintf(logFile, "<br><br>");
+    fprintf(logFile, "\n\n");
 
     #define FPRINTF_LIST_DATA_(specifier, arrayName)                          \
         do{                                                                   \
@@ -165,18 +169,74 @@ ListErrorCode ListDump(const List_t *list)
             {                                                                 \
                 fprintf(logFile, "%3"#specifier" ", list->data[i].arrayName); \
             }                                                                 \
-            fprintf(logFile, "<br><br>");                                     \
+            fprintf(logFile, "\n\n");                                         \
         } while(0)
 
     FPRINTF_LIST_DATA_(d, elem);
     FPRINTF_LIST_DATA_(d, next);
     FPRINTF_LIST_DATA_(d, prev);
 
-    fprintf(logFile, "head : %lu<br>", list->head);
-    fprintf(logFile, "tail : %lu<br>", list->tail);
-    fprintf(logFile, "free : %lu<br>", list->free);
+    fprintf(logFile, "head : %lu\n", list->head);
+    fprintf(logFile, "tail : %lu\n", list->tail);
+    fprintf(logFile, "free : %lu\n\n", list->free);
 
-    fprintf(logFile, "--------------------------------------------------------------------------------<br><br>");
+    fprintf(logFile, "--------------------------------------------------------------------------------\n\n");
+
+    fclose(logFile);
+
+    #define GRAPH_VIS_
+    #ifdef GRAPH_VIS_
+        FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
+
+        fprintf(graphViz, "digraph List{\n\n");
+        fprintf(graphViz,"\trankdir=LR;\n\n");
+        fprintf(graphViz, "\tnode[color=\"red\",fontsize=14];\n\n");
+
+        if (list->size != 0)
+        {
+            size_t head = list->head;
+            for (i = 0; i < list->size; i++)
+            {
+                fprintf(graphViz, "\t%d[shape=\"rectangle\"];\n", list->data[head].elem);
+                head = list->data[head].next;
+            }
+            fprintf(graphViz, "\n");
+
+            if (list->size > 1)
+            {
+                head = list->head;
+                if (head != 0)
+                {
+                    fprintf(graphViz, "\t%d", list->data[head].elem);
+                    head = list->data[head].next;
+                }
+                while (head != 0)
+                {
+                    fprintf(graphViz, "->%d", list->data[head].elem);
+                    head = list->data[head].next;
+                }
+                fprintf(graphViz, "[color=\"green\",fontsize=24];\n\n");
+
+                size_t tail = list->tail;
+                if (tail != 0)
+                {
+                    fprintf(graphViz, "\t%d", list->data[tail].elem);
+                    tail = list->data[tail].prev;
+                }
+                while (tail != 0)
+                {
+                    fprintf(graphViz, "->%d", list->data[tail].elem);
+                    tail = list->data[tail].prev;
+                }
+                fprintf(graphViz, "[color=\"blue\",fontsize=24];\n\n");
+            }
+        }
+
+        fprintf(graphViz, "}\n\n");
+
+        fclose(graphViz);
+    #endif // GRAPH_VIS_
+
 }
 
 ListErrorCode ListConvertLogToPhysNum(List_t *list)
@@ -265,9 +325,10 @@ static ListErrorCode ListResizeUp(List_t *list)
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_t place)
+ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t elem, const size_t place)
 {
     ASSERT_OK_(list);
+    assert(physNum != nullptr);
 
     if (list->free == 0)
     {
@@ -281,6 +342,7 @@ ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
+    *physNum = list->free;
     size_t free = list->free;
     list->free = list->data[free].next;
 
@@ -316,9 +378,10 @@ ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size_t place)
+ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t elem, const size_t place)
 {
     ASSERT_OK_(list);
+    assert(physNum != nullptr);
 
     if (list->size == 0)
     {
@@ -337,6 +400,7 @@ ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
+    *physNum = list->free;
     size_t free = list->free;
     list->free = list->data[free].next;
 

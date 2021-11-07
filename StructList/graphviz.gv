@@ -1,0 +1,18 @@
+digraph List{
+
+	rankdir=LR;
+
+	node[color="red",fontsize=14];
+
+	10[shape="rectangle"];
+	20[shape="rectangle"];
+	50[shape="rectangle"];
+	40[shape="rectangle"];
+	30[shape="rectangle"];
+
+	10->20->50->40->30[color="green",fontsize=24];
+
+	30->40->50->20->10[color="blue",fontsize=24];
+
+}
+

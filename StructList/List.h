@@ -71,15 +71,15 @@ ListErrorCode ListDump(const List_t *list);
 
 ListErrorCode ListConvertLogToPhysNum(List_t *list);
 
-ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_t place);
+ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t elem, const size_t place);
 
-#define LIST_INSERT_AT_END_(list, elem) \
-    ListInsertAfter(list, elem, (*list).tail)
+#define LIST_INSERT_AT_END_(list, physNum, elem) \
+    ListInsertAfter(list, physNum, elem, (*list).tail)
 
-ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size_t place);
+ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t elem, const size_t place);
 
-#define LIST_INSERT_AT_HEAD_(list, elem) \
-    ListInsertBefore(list, elem, (*list).head)
+#define LIST_INSERT_AT_HEAD_(list, physNum, elem) \
+    ListInsertBefore(list, physNum, elem, (*list).head)
 
 ListErrorCode ListRemove(List_t *list, structElem_t *elem, const size_t place);
 
