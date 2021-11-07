@@ -6,7 +6,7 @@ int main()
     List_t list = {};
 
     size_t capacity = 5;
-    structList_t elem = 0;
+    structElem_t elem = 0;
     ListErrorCode listErrorIn = LIST_NO_ERROR;
 
     IS_LIST_ERROR_(&list, ListCtor(&list, capacity));
@@ -43,6 +43,23 @@ int main()
     IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 3));
     IS_LIST_ERROR_(&list, ListInsertAfter(&list, elem, 2));*/
     //-------------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for define
+    /*IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, 10));
+    IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, 20));
+    IS_LIST_ERROR_(&list, LIST_INSERT_AT_HEAD_(&list, 30));
+    IS_LIST_ERROR_(&list, LIST_REMOVE_AT_END_(&list, &elem));
+    IS_LIST_ERROR_(&list, LIST_REMOVE_AT_HEAD_(&list, &elem));*/
+    //--------------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for ListResizeUp()
+    for (int i = 1; i < 2 * capacity; i++)
+    {
+        IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, i * 10));
+    }
+    //--------------------------------------------------------------------------------
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
 

@@ -15,7 +15,7 @@
         }                                 \
     } while(0)
 
-typedef int structList_t;
+typedef int structElem_t;
 
 enum ListStatus
 {
@@ -30,10 +30,8 @@ enum ListErrorCode
     LIST_CONSTRUCTED_ERROR,
     LIST_DESTRUCTED_ERROR,
     LIST_DATA_CALLOC_ERROR,
-    LIST_NEXT_CALLOC_ERROR,
-    LIST_PREV_CALLOC_ERROR,
     LIST_USE_NOT_CONSTRUCTED,
-    LIST_NO_FREE_PLACE,
+    LIST_RESIZE_UP_ERROR,
     LIST_IS_EMPTY,
     LIST_HAVE_CYCLE,
     LIST_INSERT_UNCORRECT_PLACE,
@@ -42,14 +40,19 @@ enum ListErrorCode
     LIST_ARRAY_NEXT_NO_FREE_ELEMENT,
 };
 
+struct ListData
+{
+    structElem_t elem;
+    int next;
+    int prev;
+};
+
 struct List_t
 {
     ListStatus status;
     size_t capacity;
     size_t size;
-    structList_t *data;
-    int *next;
-    int *prev;
+    ListData *data;
     size_t head;
     size_t tail;
     size_t free;
@@ -63,10 +66,22 @@ ListErrorCode ListDtor(List_t *list);
 
 void ListDump(const List_t *list);
 
-ListErrorCode ListInsertAfter(List_t *list, const structList_t elem, const size_t place);
+ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_t place);
 
-ListErrorCode ListInsertBefore(List_t *list, const structList_t elem, const size_t place);
+#define LIST_INSERT_AT_END_(list, elem) \
+    ListInsertAfter(list, elem, (*list).tail)
 
-ListErrorCode ListRemove(List_t *list, structList_t *elem, const size_t place);
+ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size_t place);
+
+#define LIST_INSERT_AT_HEAD_(list, elem) \
+    ListInsertBefore(list, elem, (*list).head)
+
+ListErrorCode ListRemove(List_t *list, structElem_t *elem, const size_t place);
+
+#define LIST_REMOVE_AT_END_(list, elem) \
+    ListRemove(list, elem, (*list).tail)
+
+#define LIST_REMOVE_AT_HEAD_(list, elem) \
+    ListRemove(list, elem, (*list).head)
 
 #endif // LIST_H_

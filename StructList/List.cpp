@@ -19,6 +19,7 @@ ListErrorCode listStatus = LIST_NO_ERROR;
     } while(0)
 
 const int LIST_PLACE_FREE = -1;
+const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const size_t POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
 
@@ -29,11 +30,11 @@ static int IsListCycle(const List_t *list)
     int slow = list->head;
     int fast = list->head;
 
-    while (fast != 0 && list->next[fast] != 0)
+    while (fast != 0 && list->data[fast].next != 0)
     {
-        slow = list->next[slow];
-        fast = list->next[fast];
-        fast = list->next[fast];
+        slow = list->data[slow].next;
+        fast = list->data[fast].next;
+        fast = list->data[fast].next;
 
         if (slow == fast)
         {
@@ -74,33 +75,21 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
     list->capacity = capacity + 1;
     list->size = 0;
 
-    list->data = (structList_t*)calloc(list->capacity, sizeof(structList_t));
+    list->data = (ListData*)calloc(list->capacity, sizeof(ListData));
     if (list->data == nullptr)
     {
         return LIST_DATA_CALLOC_ERROR;
     }
 
-    list->next = (int*)calloc(list->capacity, sizeof(int));
-    if (list->next == nullptr)
-    {
-        return LIST_NEXT_CALLOC_ERROR;
-    }
-
     size_t  i = 0;
     for (i = 1; i < list->capacity - 1; i++)
     {
-        list->next[i] = i + 1;
-    }
-
-    list->prev = (int*)calloc(list->capacity, sizeof(int));
-    if (list->prev == nullptr)
-    {
-        return LIST_PREV_CALLOC_ERROR;
+        list->data[i].next = i + 1;
     }
 
     for (i = 1; i < list->capacity; i++)
     {
-        list->prev[i] = LIST_PLACE_FREE;
+        list->data[i].prev = LIST_PLACE_FREE;
     }
 
     list->head = 0;
@@ -123,20 +112,11 @@ ListErrorCode ListDtor(List_t *list)
         return LIST_DESTRUCTED_ERROR;
     }
 
-    #define FREE_LIST_ARRAY_(type, name)     \
-        do                                   \
-        {                                    \
-                free(list->name);            \
-                list->name = (type*)ERR_PTR; \
-        }while (0)
-
     list->status = LIST_DESTRUCTED;
     list->capacity = POISON;
     list->size = POISON;
-    FREE_LIST_ARRAY_(structList_t, data);
-    FREE_LIST_ARRAY_(int, next);
-    FREE_LIST_ARRAY_(int, prev);
-    list->prev = (int*)ERR_PTR;
+    free(list->data);
+    list->data = (ListData*)ERR_PTR;
     list->head = POISON;
     list->tail = POISON;
 
@@ -159,19 +139,19 @@ void ListDump(const List_t *list)
     }
     printf("\n\n");
 
-    #define PRINT_LIST_ARRAY_(specifier, arrayName)            \
-        do{                                                    \
-            printf("%4s : ", #arrayName);                      \
-            for (i = 0; i < list->capacity; i++)               \
-            {                                                  \
-                printf("%3"#specifier" ", list->arrayName[i]); \
-            }                                                  \
-            printf("\n\n");                                    \
+    #define PRINT_LIST_DATA_(specifier, arrayName)                  \
+        do{                                                         \
+            printf("%4s : ", #arrayName);                           \
+            for (i = 0; i < list->capacity; i++)                    \
+            {                                                       \
+                printf("%3"#specifier" ", list->data[i].arrayName); \
+            }                                                       \
+            printf("\n\n");                                         \
         } while(0)
 
-    PRINT_LIST_ARRAY_(d, data);
-    PRINT_LIST_ARRAY_(d, next);
-    PRINT_LIST_ARRAY_(d, prev);
+    PRINT_LIST_DATA_(d, elem);
+    PRINT_LIST_DATA_(d, next);
+    PRINT_LIST_DATA_(d, prev);
 
     printf("head : %lu\n", list->head);
     printf("tail : %lu\n", list->tail);
@@ -180,42 +160,73 @@ void ListDump(const List_t *list)
     printf("--------------------------------------------------------------------------------");
 }
 
-ListErrorCode ListInsertAfter(List_t *list, const structList_t elem, const size_t place)
+static ListErrorCode ListResizeUp(List_t *list)
+{
+    assert(list != nullptr);
+
+    list->capacity = list->capacity * LIST_RESIZE_UP_COEFFICIENT;
+    ListData *data = (ListData*)realloc(list->data, list->capacity * sizeof(ListData));
+    if (data == nullptr)
+    {
+        return LIST_RESIZE_UP_ERROR;
+    }
+    list->data = data;
+    list->free = list->size + 1;
+
+    size_t i = 0;
+    for (i = list->free; i < list->capacity; i++)
+    {
+        list->data[i].elem = 0;
+        list->data[i].prev = LIST_PLACE_FREE;
+    }
+
+    for (i = list->free; i < list->capacity - 1; i++)
+    {
+        list->data[i].next = i + 1;
+    }
+
+    return LIST_NO_ERROR;
+}
+
+ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_t place)
 {
     ASSERT_OK_(list);
 
     if (list->free == 0)
     {
-        return LIST_NO_FREE_PLACE;
+        ListErrorCode listError = ListResizeUp(list);
+        if (listError != LIST_NO_ERROR)
+            return listError;
     }
 
-    if (list->prev[place] == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
     size_t free = list->free;
-    list->free = list->next[free];
+    list->free = list->data[free].next;
 
-    list->next[free] = list->next[place];
-    list->prev[free] = place;
+    list->data[free].next = list->data[place].next;
+    list->data[free].prev = place;
     if (list->size == 0)
     {
         list->head = free;
     }
     else
     {
-        list->next[place] = free;
+        list->data[place].next = free;
     }
+
     if (list->tail == place)
     {
         list->tail = free;
     }
     else
     {
-        list->prev[list->next[free]] = free;
+        list->data[list->data[free].next].prev = free;
     }
-    list->data[free] = elem;
+    list->data[free].elem = elem;
     list->size = list->size + 1;
 
     #ifdef DEBUG
@@ -227,7 +238,7 @@ ListErrorCode ListInsertAfter(List_t *list, const structList_t elem, const size_
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListInsertBefore(List_t *list, const structList_t elem, const size_t place)
+ListErrorCode ListInsertBefore(List_t *list, const structElem_t elem, const size_t place)
 {
     ASSERT_OK_(list);
 
@@ -238,29 +249,31 @@ ListErrorCode ListInsertBefore(List_t *list, const structList_t elem, const size
 
     if (list->free == 0)
     {
-        return LIST_NO_FREE_PLACE;
+        ListErrorCode listError = ListResizeUp(list);
+        if (listError != LIST_NO_ERROR)
+            return listError;
     }
 
-    if (list->prev[place] == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
     size_t free = list->free;
-    list->free = list->next[free];
+    list->free = list->data[free].next;
 
-    list->prev[free] = list->prev[place];
-    list->prev[place] = free;
-    list->next[free] = place;
+    list->data[free].prev = list->data[place].prev;
+    list->data[place].prev = free;
+    list->data[free].next = place;
     if (list->head == place)
     {
         list->head = free;
     }
     else
     {
-        list->next[list->prev[free]] = free;
+        list->data[list->data[free].prev].next = free;
     }
-    list->data[free] = elem;
+    list->data[free].elem = elem;
     list->size = list->size + 1;
 
     #ifdef DEBUG
@@ -272,7 +285,7 @@ ListErrorCode ListInsertBefore(List_t *list, const structList_t elem, const size
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place)
+ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
 {
     ASSERT_OK_(list);
 
@@ -283,19 +296,19 @@ ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place)
         return LIST_IS_EMPTY;
     }
 
-    if (list->prev[place] == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_REMOVE_UNCORRECT_PLACE;
     }
 
-    size_t prev = list->prev[place];
-    printf("prev : %lu\n", prev);
+    size_t prev = list->data[place].prev;
+
+    *elem = list->data[place].elem;
+    list->data[place].elem = 0;
     if (prev == 0)
     {
-        *elem = list->data[place];
-        list->data[place] = 0;
         list->size = list->size - 1;
-        list->prev[list->next[place]] = list->prev[place];
+        list->data[list->data[place].next].prev = list->data[place].prev;
         if (list->head == list->tail)
         {
             list->head = 0;
@@ -303,27 +316,25 @@ ListErrorCode ListRemove(List_t *list, structList_t *elem, size_t place)
         }
         else
         {
-            list->head = list->next[place];
+            list->head = list->data[place].next;
         }
     }
     else
     {
-        *elem = list->data[place];
-        list->data[place] = 0;
         list->size = list->size - 1;
-        list->next[prev] = list->next[place];
+        list->data[prev].next = list->data[place].next;
         if (list->tail == place)
         {
             list->tail = list->tail - 1;
         }
         else
         {
-            list->prev[list->next[place]] = list->prev[place];
+            list->data[list->data[place].next].prev = list->data[place].prev;
         }
     }
 
-    list->next[place] = list->free;
-    list->prev[place] = LIST_PLACE_FREE;
+    list->data[place].next = list->free;
+    list->data[place].prev = LIST_PLACE_FREE;
     list->free = place;
 
     #ifdef DEBUG
