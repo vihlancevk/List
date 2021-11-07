@@ -4,15 +4,36 @@ digraph List{
 
 	node[color="red",fontsize=14];
 
-	10[shape="rectangle"];
-	20[shape="rectangle"];
-	50[shape="rectangle"];
-	40[shape="rectangle"];
-	30[shape="rectangle"];
+	first[shape=record,label="{tail| 7}"];
+	zero[shape=record,label="{head| 1}"];
 
-	10->20->50->40->30[color="green",fontsize=24];
+	0[shape=record,label="{<0> 0}"];
+	1[shape=record,label="{<1> num : 1 | <10> elem : 10 | <2> next : 2 | <0> prev : 0}"];
+	2[shape=record,label="{<2> num : 2 | <20> elem : 20 | <10> next : 10 | <1> prev : 1}"];
+	3[shape=record,label="{<3> num : 3 | <30> elem : 30 | <5> next : 5 | <9> prev : 9}"];
+	5[shape=record,label="{<5> num : 5 | <50> elem : 50 | <6> next : 6 | <3> prev : 3}"];
+	6[shape=record,label="{<6> num : 6 | <60> elem : 60 | <7> next : 7 | <5> prev : 5}"];
+	7[shape=record,label="{<7> num : 7 | <70> elem : 70 | <0> next : 0 | <6> prev : 6}"];
+	9[shape=record,label="{<9> num : 9 | <80> elem : 80 | <3> next : 3 | <10> prev : 10}"];
+	10[shape=record,label="{<10> num : 10 | <90> elem : 90 | <9> next : 9 | <2> prev : 2}"];
 
-	30->40->50->20->10[color="blue",fontsize=24];
+	1 : 2 -> 2 : 10[color="green", label="next", fontsize=8];
+	2 : 10 -> 10 : 9[color="green", label="next", fontsize=8];
+	10 : 9 -> 9 : 3[color="green", label="next", fontsize=8];
+	9 : 3 -> 3 : 5[color="green", label="next", fontsize=8];
+	3 : 5 -> 5 : 6[color="green", label="next", fontsize=8];
+	5 : 6 -> 6 : 7[color="green", label="next", fontsize=8];
+	6 : 7 -> 7 : 0[color="green", label="next", fontsize=8];
+	7 : 0 -> 0 : 0[color="green", label="next", fontsize=8];
+
+	7 : 6 ->6 : 5[color="blue", label="prev", fontsize=8];
+	6 : 5 ->5 : 3[color="blue", label="prev", fontsize=8];
+	5 : 3 ->3 : 9[color="blue", label="prev", fontsize=8];
+	3 : 9 ->9 : 10[color="blue", label="prev", fontsize=8];
+	9 : 10 ->10 : 2[color="blue", label="prev", fontsize=8];
+	10 : 2 ->2 : 1[color="blue", label="prev", fontsize=8];
+	2 : 1 ->1 : 0[color="blue", label="prev", fontsize=8];
+	1 : 0 ->0 : 0[color="blue", label="prev", fontsize=8];
 
 }
 

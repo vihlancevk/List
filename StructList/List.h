@@ -39,7 +39,7 @@ enum ListErrorCode
     LIST_INSERT_UNCORRECT_PLACE,
     LIST_INSERT_BEFORE_UNCORRECT_USE,
     LIST_REMOVE_UNCORRECT_PLACE,
-    LIST_ARRAY_NEXT_NO_FREE_ELEMENT,
+    LIST_ARRAY_NEXT_NO_freePlace_ELEMENT,
 };
 
 struct ListData
@@ -58,7 +58,7 @@ struct List_t
     ListData *data;
     size_t head;
     size_t tail;
-    size_t free;
+    size_t freePlace;
 };
 
 ListErrorCode GetListError(const List_t *list);

@@ -5,7 +5,7 @@ int main()
 {
     List_t list = {};
 
-    size_t capacity = 5;
+    size_t capacity = 10;
     structElem_t elem = 0;
     int physNum = 0;
     ListErrorCode listErrorIn = LIST_NO_ERROR;
@@ -19,9 +19,13 @@ int main()
         IS_LIST_ERROR_(&list,ListInsertAfter(&list, &physNum, (i + 1) * 10, i));
     }
 
-    IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 40, 2));
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 80, 2));
 
-    IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 50, 2));
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 90, 2));
+
+    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 4));
+
+    IS_LIST_ERROR_(&list, ListRemove(&list, &elem, 8));
     //--------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------------

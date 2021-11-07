@@ -18,7 +18,7 @@ ListErrorCode listStatus = LIST_NO_ERROR;
         }                                \
     } while(0)
 
-const int LIST_PLACE_FREE = -1;
+const int LIST_PLACE_freePlace = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const size_t POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
@@ -64,12 +64,10 @@ ListErrorCode GetListError(const List_t *list)
     return LIST_NO_ERROR;
 }
 
-void ClearListLogAndGraphVizFile()
+void ClearListLogFile()
 {
     FILE *logFile = fopen(LIST_LOG_FILE, "w ");
     fclose(logFile);
-    FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
-    fclose(graphViz);
 }
 
 ListErrorCode ListCtor(List_t *list, const size_t capacity)
@@ -81,7 +79,7 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
         return LIST_CONSTRUCTED_ERROR;
     }
 
-    ClearListLogAndGraphVizFile();
+    ClearListLogFile();
 
     list->status = LIST_CONSTRUCTED;
     list->isSorted = 1;
@@ -102,12 +100,12 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
 
     for (i = 1; i < list->capacity; i++)
     {
-        list->data[i].prev = LIST_PLACE_FREE;
+        list->data[i].prev = LIST_PLACE_freePlace;
     }
 
     list->head = 0;
     list->tail = 0;
-    list->free = 1;
+    list->freePlace = 1;
 
     #ifdef DEBUG
         ListDump(list);
@@ -178,7 +176,7 @@ ListErrorCode ListDump(const List_t *list)
 
     fprintf(logFile, "head : %lu\n", list->head);
     fprintf(logFile, "tail : %lu\n", list->tail);
-    fprintf(logFile, "free : %lu\n\n", list->free);
+    fprintf(logFile, "freePlace : %lu\n\n", list->freePlace);
 
     fprintf(logFile, "--------------------------------------------------------------------------------\n\n");
 
@@ -192,12 +190,23 @@ ListErrorCode ListDump(const List_t *list)
         fprintf(graphViz,"\trankdir=LR;\n\n");
         fprintf(graphViz, "\tnode[color=\"red\",fontsize=14];\n\n");
 
+        fprintf(graphViz, "\tfirst[shape=record,label=\"{tail| %lu}\"];\n", list->tail);
+        fprintf(graphViz, "\tzero[shape=record,label=\"{head| %lu}\"];\n\n", list->head);
+
         if (list->size != 0)
         {
+            fprintf(graphViz, "\t0[shape=record,label=\"{<0> 0}\"];\n");
+
             size_t head = list->head;
-            for (i = 0; i < list->size; i++)
+            for (i = 1; i < list->capacity; i++)
             {
-                fprintf(graphViz, "\t%d[shape=\"rectangle\"];\n", list->data[head].elem);
+                if (list->data[i].prev != LIST_PLACE_freePlace)
+                {
+                    fprintf(graphViz, "\t%lu[shape=record,label=\"{<%lu> num : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d}\"];\n", i, i, i,
+                                                                                                                    list->data[i].elem, list->data[i].elem,
+                                                                                                                    list->data[i].next, list->data[i].next,
+                                                                                                                    list->data[i].prev, list->data[i].prev);
+                }
                 head = list->data[head].next;
             }
             fprintf(graphViz, "\n");
@@ -205,30 +214,22 @@ ListErrorCode ListDump(const List_t *list)
             if (list->size > 1)
             {
                 head = list->head;
-                if (head != 0)
-                {
-                    fprintf(graphViz, "\t%d", list->data[head].elem);
-                    head = list->data[head].next;
-                }
                 while (head != 0)
                 {
-                    fprintf(graphViz, "->%d", list->data[head].elem);
+                    fprintf(graphViz, "\t%d : %d ", head, list->data[head].next);
                     head = list->data[head].next;
+                    fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"next\", fontsize=8];\n", head, list->data[head].next);
                 }
-                fprintf(graphViz, "[color=\"green\",fontsize=24];\n\n");
+                fprintf(graphViz, "\n");
 
                 size_t tail = list->tail;
-                if (tail != 0)
-                {
-                    fprintf(graphViz, "\t%d", list->data[tail].elem);
-                    tail = list->data[tail].prev;
-                }
                 while (tail != 0)
                 {
-                    fprintf(graphViz, "->%d", list->data[tail].elem);
+                    fprintf(graphViz, "\t%d : %d ", tail, list->data[tail].prev);
                     tail = list->data[tail].prev;
+                    fprintf(graphViz, "->%d : %d[color=\"blue\", label=\"prev\", fontsize=8];\n", tail, list->data[tail].prev);
                 }
-                fprintf(graphViz, "[color=\"blue\",fontsize=24];\n\n");
+                fprintf(graphViz, "\n");
             }
         }
 
@@ -270,7 +271,7 @@ ListErrorCode ListConvertLogToPhysNum(List_t *list)
     for (i = list->size + 1; i < list->capacity; i++)
     {
         data[i].elem = 0;
-        data[i].prev = LIST_PLACE_FREE;
+        data[i].prev = LIST_PLACE_freePlace;
     }
 
     for (i = list->size + 1; i < list->capacity - 1; i++)
@@ -282,11 +283,11 @@ ListErrorCode ListConvertLogToPhysNum(List_t *list)
     list->data = data;
     if (list->size == list->capacity)
     {
-        list->free = 0;
+        list->freePlace = 0;
     }
     else
     {
-        list->free = list->size + 1;
+        list->freePlace = list->size + 1;
     }
     list->isSorted = 1;
 
@@ -308,16 +309,16 @@ static ListErrorCode ListResizeUp(List_t *list)
         return LIST_RESIZE_UP_ERROR;
     }
     list->data = data;
-    list->free = list->size + 1;
+    list->freePlace = list->size + 1;
 
     size_t i = 0;
-    for (i = list->free; i < list->capacity; i++)
+    for (i = list->freePlace; i < list->capacity; i++)
     {
         list->data[i].elem = 0;
-        list->data[i].prev = LIST_PLACE_FREE;
+        list->data[i].prev = LIST_PLACE_freePlace;
     }
 
-    for (i = list->free; i < list->capacity - 1; i++)
+    for (i = list->freePlace; i < list->capacity - 1; i++)
     {
         list->data[i].next = i + 1;
     }
@@ -330,43 +331,43 @@ ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t ele
     ASSERT_OK_(list);
     assert(physNum != nullptr);
 
-    if (list->free == 0)
+    if (list->freePlace == 0)
     {
         ListErrorCode listError = ListResizeUp(list);
         if (listError != LIST_NO_ERROR)
             return listError;
     }
 
-    if (list->data[place].prev == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_freePlace)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
-    *physNum = list->free;
-    size_t free = list->free;
-    list->free = list->data[free].next;
+    *physNum = list->freePlace;
+    size_t freePlace = list->freePlace;
+    list->freePlace = list->data[freePlace].next;
 
-    list->data[free].next = list->data[place].next;
-    list->data[free].prev = place;
+    list->data[freePlace].next = list->data[place].next;
+    list->data[freePlace].prev = place;
     if (list->size == 0)
     {
-        list->head = free;
+        list->head = freePlace;
     }
     else
     {
-        list->data[place].next = free;
+        list->data[place].next = freePlace;
     }
 
     if (list->tail == place)
     {
-        list->tail = free;
+        list->tail = freePlace;
     }
     else
     {
-        list->data[list->data[free].next].prev = free;
+        list->data[list->data[freePlace].next].prev = freePlace;
         list->isSorted = 0;
     }
-    list->data[free].elem = elem;
+    list->data[freePlace].elem = elem;
     list->size = list->size + 1;
 
     #ifdef DEBUG
@@ -388,34 +389,34 @@ ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t el
         return LIST_INSERT_BEFORE_UNCORRECT_USE;
     }
 
-    if (list->free == 0)
+    if (list->freePlace == 0)
     {
         ListErrorCode listError = ListResizeUp(list);
         if (listError != LIST_NO_ERROR)
             return listError;
     }
 
-    if (list->data[place].prev == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_freePlace)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
-    *physNum = list->free;
-    size_t free = list->free;
-    list->free = list->data[free].next;
+    *physNum = list->freePlace;
+    size_t freePlace = list->freePlace;
+    list->freePlace = list->data[freePlace].next;
 
-    list->data[free].prev = list->data[place].prev;
-    list->data[place].prev = free;
-    list->data[free].next = place;
+    list->data[freePlace].prev = list->data[place].prev;
+    list->data[place].prev = freePlace;
+    list->data[freePlace].next = place;
     if (list->head == place)
     {
-        list->head = free;
+        list->head = freePlace;
     }
     else
     {
-        list->data[list->data[free].prev].next = free;
+        list->data[list->data[freePlace].prev].next = freePlace;
     }
-    list->data[free].elem = elem;
+    list->data[freePlace].elem = elem;
     list->size = list->size + 1;
     list->isSorted = 0;
 
@@ -439,7 +440,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         return LIST_IS_EMPTY;
     }
 
-    if (list->data[place].prev == LIST_PLACE_FREE)
+    if (list->data[place].prev == LIST_PLACE_freePlace)
     {
         return LIST_REMOVE_UNCORRECT_PLACE;
     }
@@ -478,9 +479,9 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         }
     }
 
-    list->data[place].next = list->free;
-    list->data[place].prev = LIST_PLACE_FREE;
-    list->free = place;
+    list->data[place].next = list->freePlace;
+    list->data[place].prev = LIST_PLACE_freePlace;
+    list->freePlace = place;
 
     #ifdef DEBUG
         ListDump(list);
