@@ -29,6 +29,8 @@ enum ListErrorCode
     LIST_NO_ERROR,
     LIST_CONSTRUCTED_ERROR,
     LIST_DESTRUCTED_ERROR,
+    LIST_CONVERT_LOG_TO_PHYS_NUM_ERROR,
+    LIST_DUMP_OPEN_LOG_FILE_ERROR,
     LIST_DATA_CALLOC_ERROR,
     LIST_USE_NOT_CONSTRUCTED,
     LIST_RESIZE_UP_ERROR,
@@ -50,6 +52,7 @@ struct ListData
 struct List_t
 {
     ListStatus status;
+    int isSorted;
     size_t capacity;
     size_t size;
     ListData *data;
@@ -64,7 +67,9 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity);
 
 ListErrorCode ListDtor(List_t *list);
 
-void ListDump(const List_t *list);
+ListErrorCode ListDump(const List_t *list);
+
+ListErrorCode ListConvertLogToPhysNum(List_t *list);
 
 ListErrorCode ListInsertAfter(List_t *list, const structElem_t elem, const size_t place);
 

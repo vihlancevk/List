@@ -22,6 +22,7 @@ const int LIST_PLACE_FREE = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const size_t POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
+const char *LIST_LOG_FILE = "listLog.html";
 
 static int IsListCycle(const List_t *list)
 {
@@ -62,6 +63,11 @@ ListErrorCode GetListError(const List_t *list)
     return LIST_NO_ERROR;
 }
 
+void ClearListLogFile()
+{
+    FILE *logFile = fopen(LIST_LOG_FILE, "w ");
+}
+
 ListErrorCode ListCtor(List_t *list, const size_t capacity)
 {
     assert(list != nullptr);
@@ -71,7 +77,10 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
         return LIST_CONSTRUCTED_ERROR;
     }
 
+    ClearListLogFile();
+
     list->status = LIST_CONSTRUCTED;
+    list->isSorted = 1;
     list->capacity = capacity + 1;
     list->size = 0;
 
@@ -113,6 +122,7 @@ ListErrorCode ListDtor(List_t *list)
     }
 
     list->status = LIST_DESTRUCTED;
+    list->isSorted = POISON;
     list->capacity = POISON;
     list->size = POISON;
     free(list->data);
@@ -123,41 +133,108 @@ ListErrorCode ListDtor(List_t *list)
     return LIST_NO_ERROR;
 }
 
-void ListDump(const List_t *list)
+ListErrorCode ListDump(const List_t *list)
 {
     assert(list != nullptr);
 
-    printf("--------------------------------------------------------------------------------");
+    FILE *logFile = fopen(LIST_LOG_FILE, "a");
+    if (logFile == nullptr)
+    {
+        return LIST_DUMP_OPEN_LOG_FILE_ERROR;
+    }
 
-    printf("size : %lu\n\n", list->size);
+    fprintf(logFile, "--------------------------------------------------------------------------------<br>");
+
+    fprintf(logFile, "<font color=\"purple\">[LIST_DUMP]</font><br><br>");
+
+    fprintf(logFile, "isSorted : %d<br>", list->isSorted);
+    fprintf(logFile, "size : %lu<br><br>", list->size);
 
     size_t i = 0;
-    printf("%4s : ", "i");
+    fprintf(logFile, "%4s : ", "i");
     for (i = 0; i < list->capacity; i++)
     {
-        printf("%3lu ", i);
+        fprintf(logFile, "%3lu ", i);
     }
-    printf("\n\n");
+    fprintf(logFile, "<br><br>");
 
-    #define PRINT_LIST_DATA_(specifier, arrayName)                  \
-        do{                                                         \
-            printf("%4s : ", #arrayName);                           \
-            for (i = 0; i < list->capacity; i++)                    \
-            {                                                       \
-                printf("%3"#specifier" ", list->data[i].arrayName); \
-            }                                                       \
-            printf("\n\n");                                         \
+    #define FPRINTF_LIST_DATA_(specifier, arrayName)                          \
+        do{                                                                   \
+            fprintf(logFile, "%4s : ", #arrayName);                           \
+            for (i = 0; i < list->capacity; i++)                              \
+            {                                                                 \
+                fprintf(logFile, "%3"#specifier" ", list->data[i].arrayName); \
+            }                                                                 \
+            fprintf(logFile, "<br><br>");                                     \
         } while(0)
 
-    PRINT_LIST_DATA_(d, elem);
-    PRINT_LIST_DATA_(d, next);
-    PRINT_LIST_DATA_(d, prev);
+    FPRINTF_LIST_DATA_(d, elem);
+    FPRINTF_LIST_DATA_(d, next);
+    FPRINTF_LIST_DATA_(d, prev);
 
-    printf("head : %lu\n", list->head);
-    printf("tail : %lu\n", list->tail);
-    printf("free : %lu\n", list->free);
+    fprintf(logFile, "head : %lu<br>", list->head);
+    fprintf(logFile, "tail : %lu<br>", list->tail);
+    fprintf(logFile, "free : %lu<br>", list->free);
 
-    printf("--------------------------------------------------------------------------------");
+    fprintf(logFile, "--------------------------------------------------------------------------------<br><br>");
+}
+
+ListErrorCode ListConvertLogToPhysNum(List_t *list)
+{
+    assert(list != nullptr);
+
+    ListData *data = (ListData*)calloc(list->capacity, sizeof(ListData));
+    if (data == nullptr)
+    {
+        return LIST_CONVERT_LOG_TO_PHYS_NUM_ERROR;
+    }
+
+    size_t i = 0;
+    size_t currentLogNum = list->head;
+    for (i = 1; i < list->size + 1; i++)
+    {
+        data[i].elem = list->data[currentLogNum].elem;
+        currentLogNum = list->data[currentLogNum].next;
+    }
+
+    for (i = 1; i < list->size; i++)
+    {
+        data[i].next = i + 1;
+    }
+
+    for (i = 2; i < list->size + 1; i++)
+    {
+        data[i].prev = i - 1;
+    }
+
+    for (i = list->size + 1; i < list->capacity; i++)
+    {
+        data[i].elem = 0;
+        data[i].prev = LIST_PLACE_FREE;
+    }
+
+    for (i = list->size + 1; i < list->capacity - 1; i++)
+    {
+        data[i].next = i + 1;
+    }
+
+    free(list->data);
+    list->data = data;
+    if (list->size == list->capacity)
+    {
+        list->free = 0;
+    }
+    else
+    {
+        list->free = list->size + 1;
+    }
+    list->isSorted = 1;
+
+    #ifdef DEBUG
+        ListDump(list);
+    #endif // DEBUG
+
+    return LIST_NO_ERROR;
 }
 
 static ListErrorCode ListResizeUp(List_t *list)

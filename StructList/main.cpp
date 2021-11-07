@@ -55,10 +55,20 @@ int main()
 
     //--------------------------------------------------------------------------------
     //UNIT TEST for ListResizeUp()
-    for (int i = 1; i < 2 * capacity; i++)
+    /*for (int i = 1; i < 2 * capacity; i++)
+    {
+        IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, i * 10));
+    }*/
+    //--------------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------------
+    //UNIT TEST for ListConvertLogToPhysNum()
+    /*for (int i = 1; i < capacity + 1; i++)
     {
         IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, i * 10));
     }
+    IS_LIST_ERROR_(&list, ListInsertAfter(&list, 60, 2));
+    IS_LIST_ERROR_(&list, ListConvertLogToPhysNum(&list));*/
     //--------------------------------------------------------------------------------
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
