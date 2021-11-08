@@ -1,13 +1,22 @@
 # depslib dependency file v1.0
-1636318690 source:/home/kostya/StructList/List.cpp
+1636388797 source:/home/kostya/StructList/List.cpp
 	<stdio.h>
 	<stdlib.h>
 	<assert.h>
 	"List.h"
 
-1636316653 source:/home/kostya/StructList/main.cpp
+1636389630 source:/home/kostya/StructList/main.cpp
 	<stdio.h>
 	"List.h"
+	"UnitTests.h"
 
-1636318918 /home/kostya/StructList/List.h
+1636362273 /home/kostya/StructList/List.h
+	<stdio.h>
+
+1636389145 /home/kostya/StructList/UnitTests.h
+	"List.h"
+
+1636389500 source:/home/kostya/StructList/UnitTests.cpp
+	"UnitTests.h"
+	"List.h"
 

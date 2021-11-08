@@ -1,6 +1,8 @@
 #ifndef LIST_H_
 #define LIST_H_
 
+#include <stdio.h>
+
 #define DEBUG
 
 #define IS_LIST_ERROR_(list, listError)   \

@@ -34,6 +34,8 @@
 		</Compiler>
 		<Unit filename="List.cpp" />
 		<Unit filename="List.h" />
+		<Unit filename="UnitTests.cpp" />
+		<Unit filename="UnitTests.h" />
 		<Unit filename="main.cpp" />
 		<Extensions />
 	</Project>

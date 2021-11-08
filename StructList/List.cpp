@@ -20,10 +20,11 @@ ListErrorCode listStatus = LIST_NO_ERROR;
 
 const int LIST_PLACE_freePlace = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
+const int LIST_CMD_MAX_SIZE = 1000;
 const size_t POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
-const char *LIST_LOG_FILE = "listLog.txt";
-const char *LIST_GRAPH_VIZ = "graphviz.gv";
+const char *LIST_LOG_FILE = "listLog.html";
+const char *LIST_GRAPH_VIZ = "/home/kostya/StructList/graphviz.gv";
 
 static int IsListCycle(const List_t *list)
 {
@@ -145,12 +146,12 @@ ListErrorCode ListDump(const List_t *list)
         return LIST_DUMP_OPEN_LOG_FILE_ERROR;
     }
 
-    fprintf(logFile, "--------------------------------------------------------------------------------\n\n");
+    fprintf(logFile, "--------------------------------------------------------------------------------<br><br>");
 
-    fprintf(logFile, "[LIST_DUMP]\n\n");
+    fprintf(logFile, "[LIST_DUMP]<br><br>");
 
-    fprintf(logFile, "isSorted : %d\n", list->isSorted);
-    fprintf(logFile, "size : %lu\n\n", list->size);
+    fprintf(logFile, "isSorted : %d<br>", list->isSorted);
+    fprintf(logFile, "size : %lu<br><br>", list->size);
 
     size_t i = 0;
     fprintf(logFile, "%4s : ", "i");
@@ -158,7 +159,7 @@ ListErrorCode ListDump(const List_t *list)
     {
         fprintf(logFile, "%3lu ", i);
     }
-    fprintf(logFile, "\n\n");
+    fprintf(logFile, "<br><br>");
 
     #define FPRINTF_LIST_DATA_(specifier, arrayName)                          \
         do{                                                                   \
@@ -167,7 +168,7 @@ ListErrorCode ListDump(const List_t *list)
             {                                                                 \
                 fprintf(logFile, "%3"#specifier" ", list->data[i].arrayName); \
             }                                                                 \
-            fprintf(logFile, "\n\n");                                         \
+            fprintf(logFile, "<br><br>");                                     \
         } while(0)
 
     FPRINTF_LIST_DATA_(d, elem);
@@ -176,68 +177,74 @@ ListErrorCode ListDump(const List_t *list)
 
     fprintf(logFile, "head : %lu\n", list->head);
     fprintf(logFile, "tail : %lu\n", list->tail);
-    fprintf(logFile, "freePlace : %lu\n\n", list->freePlace);
+    fprintf(logFile, "freePlace : %lu<br><br>", list->freePlace);
 
-    fprintf(logFile, "--------------------------------------------------------------------------------\n\n");
+    FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
 
-    fclose(logFile);
+    fprintf(graphViz, "digraph List{\n\n");
+    fprintf(graphViz,"\trankdir=LR;\n\n");
+    fprintf(graphViz, "\tnode[color=\"red\",fontsize=14];\n\n");
 
-    #define GRAPH_VIS_
-    #ifdef GRAPH_VIS_
-        FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
+    fprintf(graphViz, "\tfirst[shape=record,label=\"{tail| %lu}\"];\n", list->tail);
+    fprintf(graphViz, "\tzero[shape=record,label=\"{head| %lu}\"];\n\n", list->head);
 
-        fprintf(graphViz, "digraph List{\n\n");
-        fprintf(graphViz,"\trankdir=LR;\n\n");
-        fprintf(graphViz, "\tnode[color=\"red\",fontsize=14];\n\n");
+    if (list->size != 0)
+    {
+        fprintf(graphViz, "\t0[shape=record,label=\"{<0> 0}\"];\n");
 
-        fprintf(graphViz, "\tfirst[shape=record,label=\"{tail| %lu}\"];\n", list->tail);
-        fprintf(graphViz, "\tzero[shape=record,label=\"{head| %lu}\"];\n\n", list->head);
-
-        if (list->size != 0)
+        size_t head = list->head;
+        for (i = 1; i < list->capacity; i++)
         {
-            fprintf(graphViz, "\t0[shape=record,label=\"{<0> 0}\"];\n");
-
-            size_t head = list->head;
-            for (i = 1; i < list->capacity; i++)
+            if (list->data[i].prev != LIST_PLACE_freePlace)
             {
-                if (list->data[i].prev != LIST_PLACE_freePlace)
-                {
-                    fprintf(graphViz, "\t%lu[shape=record,label=\"{<%lu> num : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d}\"];\n", i, i, i,
-                                                                                                                    list->data[i].elem, list->data[i].elem,
-                                                                                                                    list->data[i].next, list->data[i].next,
-                                                                                                                    list->data[i].prev, list->data[i].prev);
-                }
+                fprintf(graphViz, "\t%lu[shape=record,label=\"<%lu> address : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d\"];\n", i, i, i,
+                                                                                                                list->data[i].elem, list->data[i].elem,
+                                                                                                                list->data[i].next, list->data[i].next,
+                                                                                                                list->data[i].prev, list->data[i].prev);
+            }
+            head = list->data[head].next;
+        }
+        fprintf(graphViz, "\n");
+
+        if (list->size > 1)
+        {
+            head = list->head;
+            while (head != 0)
+            {
+                fprintf(graphViz, "\t%d : %d ", head, list->data[head].next);
                 head = list->data[head].next;
+                fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"next\", fontsize=8];\n", head, list->data[head].next);
             }
             fprintf(graphViz, "\n");
 
-            if (list->size > 1)
+            size_t tail = list->tail;
+            while (tail != 0)
             {
-                head = list->head;
-                while (head != 0)
-                {
-                    fprintf(graphViz, "\t%d : %d ", head, list->data[head].next);
-                    head = list->data[head].next;
-                    fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"next\", fontsize=8];\n", head, list->data[head].next);
-                }
-                fprintf(graphViz, "\n");
-
-                size_t tail = list->tail;
-                while (tail != 0)
-                {
-                    fprintf(graphViz, "\t%d : %d ", tail, list->data[tail].prev);
-                    tail = list->data[tail].prev;
-                    fprintf(graphViz, "->%d : %d[color=\"blue\", label=\"prev\", fontsize=8];\n", tail, list->data[tail].prev);
-                }
-                fprintf(graphViz, "\n");
+                fprintf(graphViz, "\t%d : %d ", tail, list->data[tail].prev);
+                tail = list->data[tail].prev;
+                fprintf(graphViz, "->%d : %d[color=\"blue\", label=\"prev\", fontsize=8];\n", tail, list->data[tail].prev);
             }
+            fprintf(graphViz, "\n");
         }
+    }
 
-        fprintf(graphViz, "}\n\n");
+    fprintf(graphViz, "}\n\n");
 
-        fclose(graphViz);
-    #endif // GRAPH_VIS_
+    fclose(graphViz);
 
+    static int cntImg = 1;
+    char *str = (char*)calloc(LIST_CMD_MAX_SIZE, sizeof(char));
+    sprintf(str, "%s%d%s", "dot -Tpng /home/kostya/StructList/graphviz.gv -o /home/kostya/StructList/graphviz/graphviz", cntImg, ".png");
+    system(str);
+    sprintf(str, "%s%d%s", "<img src =\"/home/kostya/StructList/graphviz/graphviz", cntImg, ".png\"><br>");
+    fprintf(logFile, str);
+    cntImg = cntImg + 1;
+    free(str);
+
+    fprintf(logFile, "--------------------------------------------------------------------------------<br><br>");
+
+
+    fclose(logFile);
 }
 
 ListErrorCode ListConvertLogToPhysNum(List_t *list)
