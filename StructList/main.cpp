@@ -6,7 +6,7 @@ int main()
 {
     ListErrorCode listError = LIST_NO_ERROR;
 
-    UNIT_TEST_(ListResizeUp, listError);
+    UNIT_TEST_(ListInsertAfter, listError);
 
     return listError;
 }
