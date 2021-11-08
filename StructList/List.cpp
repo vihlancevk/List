@@ -175,8 +175,8 @@ ListErrorCode ListDump(const List_t *list)
     FPRINTF_LIST_DATA_(d, next);
     FPRINTF_LIST_DATA_(d, prev);
 
-    fprintf(logFile, "head : %lu\n", list->head);
-    fprintf(logFile, "tail : %lu\n", list->tail);
+    fprintf(logFile, "head : %lu<br>", list->head);
+    fprintf(logFile, "tail : %lu<br>", list->tail);
     fprintf(logFile, "freePlace : %lu<br><br>", list->freePlace);
 
     FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
@@ -185,12 +185,9 @@ ListErrorCode ListDump(const List_t *list)
     fprintf(graphViz,"\trankdir=LR;\n\n");
     fprintf(graphViz, "\tnode[color=\"red\",fontsize=14];\n\n");
 
-    fprintf(graphViz, "\tfirst[shape=record,label=\"{tail| %lu}\"];\n", list->tail);
-    fprintf(graphViz, "\tzero[shape=record,label=\"{head| %lu}\"];\n\n", list->head);
-
     if (list->size != 0)
     {
-        fprintf(graphViz, "\t0[shape=record,label=\"{<0> 0}\"];\n");
+        fprintf(graphViz, "\t0[shape=record,label=\"<0> 0 | <0> 0 | <0> 0 | <0> 0\"];\n");
 
         size_t head = list->head;
         for (i = 1; i < list->capacity; i++)

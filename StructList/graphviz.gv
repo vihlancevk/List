@@ -4,10 +4,7 @@ digraph List{
 
 	node[color="red",fontsize=14];
 
-	first[shape=record,label="{tail| 19}"];
-	zero[shape=record,label="{head| 1}"];
-
-	0[shape=record,label="{<0> 0}"];
+	0[shape=record,label="<0> 0 | <0> 0 | <0> 0 | <0> 0"];
 	1[shape=record,label="<1> address : 1 | <10> elem : 10 | <2> next : 2 | <0> prev : 0"];
 	2[shape=record,label="<2> address : 2 | <20> elem : 20 | <3> next : 3 | <1> prev : 1"];
 	3[shape=record,label="<3> address : 3 | <30> elem : 30 | <4> next : 4 | <2> prev : 2"];
