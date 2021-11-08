@@ -18,7 +18,7 @@ ListErrorCode listStatus = LIST_NO_ERROR;
         }                                \
     } while(0)
 
-const int LIST_PLACE_freePlace = -1;
+const int LIST_PLACE_FREE = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const int LIST_CMD_MAX_SIZE = 1000;
 const size_t POISON = -(1000 - 7);
@@ -101,7 +101,7 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
 
     for (i = 1; i < list->capacity; i++)
     {
-        list->data[i].prev = LIST_PLACE_freePlace;
+        list->data[i].prev = LIST_PLACE_FREE;
     }
 
     list->head = 0;
@@ -192,7 +192,7 @@ ListErrorCode ListDump(const List_t *list)
         size_t head = list->head;
         for (i = 1; i < list->capacity; i++)
         {
-            if (list->data[i].prev != LIST_PLACE_freePlace)
+            if (list->data[i].prev != LIST_PLACE_FREE)
             {
                 fprintf(graphViz, "\t%lu[shape=record,label=\"<%lu> address : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d\"];\n", i, i, i,
                                                                                                                 list->data[i].elem, list->data[i].elem,
@@ -275,7 +275,7 @@ ListErrorCode ListConvertLogToPhysNum(List_t *list)
     for (i = list->size + 1; i < list->capacity; i++)
     {
         data[i].elem = 0;
-        data[i].prev = LIST_PLACE_freePlace;
+        data[i].prev = LIST_PLACE_FREE;
     }
 
     for (i = list->size + 1; i < list->capacity - 1; i++)
@@ -319,7 +319,7 @@ static ListErrorCode ListResizeUp(List_t *list)
     for (i = list->freePlace; i < list->capacity; i++)
     {
         list->data[i].elem = 0;
-        list->data[i].prev = LIST_PLACE_freePlace;
+        list->data[i].prev = LIST_PLACE_FREE;
     }
 
     for (i = list->freePlace; i < list->capacity - 1; i++)
@@ -342,7 +342,7 @@ ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t ele
             return listError;
     }
 
-    if (list->data[place].prev == LIST_PLACE_freePlace)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
@@ -400,7 +400,7 @@ ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t el
             return listError;
     }
 
-    if (list->data[place].prev == LIST_PLACE_freePlace)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_INSERT_UNCORRECT_PLACE;
     }
@@ -444,7 +444,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         return LIST_IS_EMPTY;
     }
 
-    if (list->data[place].prev == LIST_PLACE_freePlace)
+    if (list->data[place].prev == LIST_PLACE_FREE)
     {
         return LIST_REMOVE_UNCORRECT_PLACE;
     }
@@ -484,7 +484,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
     }
 
     list->data[place].next = list->freePlace;
-    list->data[place].prev = LIST_PLACE_freePlace;
+    list->data[place].prev = LIST_PLACE_FREE;
     list->freePlace = place;
 
     #ifdef DEBUG
