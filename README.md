@@ -4,3 +4,5 @@ However, my struct of data has the feature. It is the useful dump list, which he
 ## DumpList
 Function, which makes the listLog.html file. He has information about the list and grafic visualization,
 which are created with the help of Graphviz (https://graphviz.org/).
+![alt text](https://github.com/vihlancevk/StructList/graphviz.png?raw=true)
+
