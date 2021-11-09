@@ -5,19 +5,7 @@
 
 #define DEBUG
 
-#define IS_LIST_ERROR_(list, listError)   \
-    do                                    \
-    {                                     \
-        listErrorIn = listError;          \
-        if (listErrorIn != LIST_NO_ERROR) \
-        {                                 \
-            /*TODO SMTH*/                 \
-            ListDtor(list);               \
-            return listErrorIn;           \
-        }                                 \
-    } while(0)
-
-typedef int structElem_t;
+typedef int structElemT;
 
 enum ListStatus
 {
@@ -41,12 +29,11 @@ enum ListErrorCode
     LIST_INSERT_UNCORRECT_PLACE,
     LIST_INSERT_BEFORE_UNCORRECT_USE,
     LIST_REMOVE_UNCORRECT_PLACE,
-    LIST_ARRAY_NEXT_NO_freePlace_ELEMENT,
 };
 
-struct ListData
+struct ListNode_t
 {
-    structElem_t elem;
+    structElemT elem;
     int next;
     int prev;
 };
@@ -57,10 +44,10 @@ struct List_t
     int isSorted;
     size_t capacity;
     size_t size;
-    ListData *data;
-    size_t head;
-    size_t tail;
-    size_t freePlace;
+    ListNode_t *data;
+    int head;
+    int tail;
+    int freePlace;
 };
 
 ListErrorCode GetListError(const List_t *list);
@@ -71,19 +58,19 @@ ListErrorCode ListDtor(List_t *list);
 
 ListErrorCode ListDump(const List_t *list);
 
-ListErrorCode ListConvertLogToPhysNum(List_t *list);
+ListErrorCode ListConvertLogicalToPhysNum(List_t *list);
 
-ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t elem, const size_t place);
+ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElemT elem, const int place);
 
 #define LIST_INSERT_AT_END_(list, physNum, elem) \
     ListInsertAfter(list, physNum, elem, (*list).tail)
 
-ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t elem, const size_t place);
+ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElemT elem, const int place);
 
 #define LIST_INSERT_AT_HEAD_(list, physNum, elem) \
     ListInsertBefore(list, physNum, elem, (*list).head)
 
-ListErrorCode ListRemove(List_t *list, structElem_t *elem, const size_t place);
+ListErrorCode ListRemove(List_t *list, structElemT *elem, const int place);
 
 #define LIST_REMOVE_AT_END_(list, elem) \
     ListRemove(list, elem, (*list).tail)

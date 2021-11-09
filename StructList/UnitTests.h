@@ -3,7 +3,7 @@
 
 #include "List.h"
 
-#define UNIT_TEST_(name, listError)                    \
+#define UNIT_TEST_(name, listError)                        \
         do                                                 \
         {                                                  \
             listError = UnitTestFor##name();               \
@@ -24,6 +24,6 @@ ListErrorCode UnitTestForListDefine();
 
 ListErrorCode UnitTestForListResizeUp();
 
-ListErrorCode UnitTestForListConvertLogToPhysNum();
+ListErrorCode UnitTestForListConvertLogicalToPhysNum();
 
 #endif // UNIT_TESTS_H_

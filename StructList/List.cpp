@@ -21,7 +21,7 @@ ListErrorCode listStatus = LIST_NO_ERROR;
 const int LIST_PLACE_FREE = -1;
 const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const int LIST_CMD_MAX_SIZE = 1000;
-const size_t POISON = -(1000 - 7);
+const int POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
 const char *LIST_LOG_FILE = "listLog.html";
 const char *LIST_GRAPH_VIZ = "/home/kostya/StructList/graphviz.gv";
@@ -87,7 +87,7 @@ ListErrorCode ListCtor(List_t *list, const size_t capacity)
     list->capacity = capacity + 1;
     list->size = 0;
 
-    list->data = (ListData*)calloc(list->capacity, sizeof(ListData));
+    list->data = (ListNode_t*)calloc(list->capacity, sizeof(ListNode_t));
     if (list->data == nullptr)
     {
         return LIST_DATA_CALLOC_ERROR;
@@ -129,7 +129,7 @@ ListErrorCode ListDtor(List_t *list)
     list->capacity = POISON;
     list->size = POISON;
     free(list->data);
-    list->data = (ListData*)ERR_PTR;
+    list->data = (ListNode_t*)ERR_PTR;
     list->head = POISON;
     list->tail = POISON;
 
@@ -175,9 +175,9 @@ ListErrorCode ListDump(const List_t *list)
     FPRINTF_LIST_DATA_(d, next);
     FPRINTF_LIST_DATA_(d, prev);
 
-    fprintf(logFile, "head : %lu<br>", list->head);
-    fprintf(logFile, "tail : %lu<br>", list->tail);
-    fprintf(logFile, "freePlace : %lu<br><br>", list->freePlace);
+    fprintf(logFile, "head : %d<br>", list->head);
+    fprintf(logFile, "tail : %d<br>", list->tail);
+    fprintf(logFile, "freePlace : %d<br><br>", list->freePlace);
 
     FILE *graphViz = fopen(LIST_GRAPH_VIZ, "w");
 
@@ -189,7 +189,7 @@ ListErrorCode ListDump(const List_t *list)
     {
         fprintf(graphViz, "\t0[shape=record,label=\"<0> 0 | <0> 0 | <0> 0 | <0> 0\"];\n");
 
-        size_t head = list->head;
+        int head = list->head;
         for (i = 1; i < list->capacity; i++)
         {
             if (list->data[i].prev != LIST_PLACE_FREE)
@@ -214,7 +214,7 @@ ListErrorCode ListDump(const List_t *list)
             }
             fprintf(graphViz, "\n");
 
-            size_t tail = list->tail;
+            int tail = list->tail;
             while (tail != 0)
             {
                 fprintf(graphViz, "\t%d : %d ", tail, list->data[tail].prev);
@@ -234,7 +234,7 @@ ListErrorCode ListDump(const List_t *list)
     sprintf(str, "%s%d%s", "dot -Tpng /home/kostya/StructList/graphviz.gv -o /home/kostya/StructList/graphviz/graphviz", cntImg, ".png");
     system(str);
     sprintf(str, "%s%d%s", "<img src =\"/home/kostya/StructList/graphviz/graphviz", cntImg, ".png\"><br>");
-    fprintf(logFile, str);
+    fprintf(logFile, "%s", str);
     cntImg = cntImg + 1;
     free(str);
 
@@ -244,18 +244,18 @@ ListErrorCode ListDump(const List_t *list)
     fclose(logFile);
 }
 
-ListErrorCode ListConvertLogToPhysNum(List_t *list)
+ListErrorCode ListConvertLogicalToPhysNum(List_t *list)
 {
     assert(list != nullptr);
 
-    ListData *data = (ListData*)calloc(list->capacity, sizeof(ListData));
+    ListNode_t *data = (ListNode_t*)calloc(list->capacity, sizeof(ListNode_t));
     if (data == nullptr)
     {
         return LIST_CONVERT_LOG_TO_PHYS_NUM_ERROR;
     }
 
     size_t i = 0;
-    size_t currentLogNum = list->head;
+    int currentLogNum = list->head;
     for (i = 1; i < list->size + 1; i++)
     {
         data[i].elem = list->data[currentLogNum].elem;
@@ -307,7 +307,7 @@ static ListErrorCode ListResizeUp(List_t *list)
     assert(list != nullptr);
 
     list->capacity = list->capacity * LIST_RESIZE_UP_COEFFICIENT;
-    ListData *data = (ListData*)realloc(list->data, list->capacity * sizeof(ListData));
+    ListNode_t *data = (ListNode_t*)realloc(list->data, list->capacity * sizeof(ListNode_t));
     if (data == nullptr)
     {
         return LIST_RESIZE_UP_ERROR;
@@ -330,10 +330,9 @@ static ListErrorCode ListResizeUp(List_t *list)
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t elem, const size_t place)
+ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElemT elem, const int place)
 {
     ASSERT_OK_(list);
-    assert(physNum != nullptr);
 
     if (list->freePlace == 0)
     {
@@ -347,8 +346,11 @@ ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t ele
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
-    *physNum = list->freePlace;
-    size_t freePlace = list->freePlace;
+    if (physNum != nullptr)
+    {
+        *physNum = list->freePlace;
+    }
+    int freePlace = list->freePlace;
     list->freePlace = list->data[freePlace].next;
 
     list->data[freePlace].next = list->data[place].next;
@@ -383,10 +385,9 @@ ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElem_t ele
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t elem, const size_t place)
+ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElemT elem, const int place)
 {
     ASSERT_OK_(list);
-    assert(physNum != nullptr);
 
     if (list->size == 0)
     {
@@ -405,8 +406,11 @@ ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t el
         return LIST_INSERT_UNCORRECT_PLACE;
     }
 
-    *physNum = list->freePlace;
-    size_t freePlace = list->freePlace;
+    if (physNum != nullptr)
+    {
+        *physNum = list->freePlace;
+    }
+    int freePlace = list->freePlace;
     list->freePlace = list->data[freePlace].next;
 
     list->data[freePlace].prev = list->data[place].prev;
@@ -433,7 +437,7 @@ ListErrorCode ListInsertBefore(List_t *list, int *physNum, const structElem_t el
     return LIST_NO_ERROR;
 }
 
-ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
+ListErrorCode ListRemove(List_t *list, structElemT *elem, const int place)
 {
     ASSERT_OK_(list);
 
@@ -449,7 +453,7 @@ ListErrorCode ListRemove(List_t *list, structElem_t *elem, size_t place)
         return LIST_REMOVE_UNCORRECT_PLACE;
     }
 
-    size_t prev = list->data[place].prev;
+    int prev = list->data[place].prev;
 
     *elem = list->data[place].elem;
     list->data[place].elem = 0;

@@ -1,8 +1,20 @@
 #include "UnitTests.h"
 #include "List.h"
 
+#define IS_LIST_ERROR_(list, listError)   \
+    do                                    \
+    {                                     \
+        listErrorIn = listError;          \
+        if (listErrorIn != LIST_NO_ERROR) \
+        {                                 \
+            /*TODO SMTH*/                 \
+            ListDtor(list);               \
+            return listErrorIn;           \
+        }                                 \
+    } while(0)
+
 const size_t capacity = 10;
-structElem_t elem = 0;
+structElemT elem = 0;
 int physNum = 0;
 ListErrorCode listErrorIn = LIST_NO_ERROR;
 
@@ -92,7 +104,7 @@ ListErrorCode UnitTestForListResizeUp()
 
     IS_LIST_ERROR_(&list, ListCtor(&list, capacity));
 
-    for (int i = 1; i < 2 * capacity; i++)
+    for (size_t i = 1; i < 2 * capacity; i++)
     {
         IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, &physNum, i * 10));
     }
@@ -102,18 +114,18 @@ ListErrorCode UnitTestForListResizeUp()
     return LIST_NO_ERROR;
 }
 
-ListErrorCode UnitTestForListConvertLogToPhysNum()
+ListErrorCode UnitTestForListConvertLogicalToPhysNum()
 {
     List_t list = {};
 
     IS_LIST_ERROR_(&list, ListCtor(&list, capacity));
 
-    for (int i = 1; i < capacity + 1; i++)
+    for (size_t i = 1; i < capacity + 1; i++)
     {
         IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, &physNum, i * 10));
     }
     IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 60, 2));
-    IS_LIST_ERROR_(&list, ListConvertLogToPhysNum(&list));
+    IS_LIST_ERROR_(&list, ListConvertLogicalToPhysNum(&list));
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
 
