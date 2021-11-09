@@ -1,8 +1,8 @@
 # StructList
-It is one of the most popular struct of data, which will be useful for me in the next projects. 
-However, my struct of data has the feature. It is the useful dump list, which helps to debug program.
+It is one of the most popular data structures, which will be useful for me in the next projects. 
+My implementation has a unique feature - visual dump of the list.
 ## DumpList
-Function, which makes the listLog.html file. He has information about the list and grafic visualization,
-which are created with the help of Graphviz (https://graphviz.org/).
+Function, which generates a listLog.html file. Containing the information about the list and a visual presentation of the list,
+which is created with the help of Graphviz (https://graphviz.org/).
 ![alt text](https://github.com/vihlancevk/StructList/blob/main/StructList/graphviz.png?raw=true)
 
