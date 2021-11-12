@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "List.h"
 
 #define DEBUG
@@ -136,6 +137,11 @@ ListErrorCode ListDtor(List_t *list)
     return LIST_NO_ERROR;
 }
 
+struct ListDumpNodeDescription
+{
+    char color[10];
+};
+
 ListErrorCode ListDump(const List_t *list)
 {
     assert(list != nullptr);
@@ -187,39 +193,62 @@ ListErrorCode ListDump(const List_t *list)
 
     if (list->size != 0)
     {
-        fprintf(graphViz, "\t0[shape=record,label=\"<0> 0 | <0> 0 | <0> 0 | <0> 0\"];\n");
-
+        ListDumpNodeDescription listNode = {};
         int head = list->head;
         for (i = 1; i < list->capacity; i++)
         {
-            if (list->data[i].prev != LIST_PLACE_FREE)
+            if (list->data[i].prev == -1)
             {
-                fprintf(graphViz, "\t%lu[shape=record,label=\"<%lu> address : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d\"];\n", i, i, i,
-                                                                                                                list->data[i].elem, list->data[i].elem,
-                                                                                                                list->data[i].next, list->data[i].next,
-                                                                                                                list->data[i].prev, list->data[i].prev);
+                strcpy(listNode.color, "green");
             }
+            else
+            {
+                strcpy(listNode.color, "yellow");
+            }
+            fprintf(graphViz, "\t%lu[shape=record, style=\"filled\", fillcolor=%s, label=\"<%lu> address : %lu | <%d> elem : %d | <%d> next : %d | <%d> prev : %d\"];\n",
+                    i, listNode.color, i, i,
+                    list->data[i].elem, list->data[i].elem,
+                    list->data[i].next, list->data[i].next,
+                    list->data[i].prev, list->data[i].prev);
+
             head = list->data[head].next;
         }
         fprintf(graphViz, "\n");
 
         if (list->size > 1)
         {
-            head = list->head;
-            while (head != 0)
+            fprintf(graphViz, "\t{\n");
+            fprintf(graphViz, "\t\tedge[color=white]\n");
+            for (i = 1; i < list->capacity - 1; i++)
             {
-                fprintf(graphViz, "\t%d : %d ", head, list->data[head].next);
-                head = list->data[head].next;
-                fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"next\", fontsize=8];\n", head, list->data[head].next);
+                fprintf(graphViz, "\t\t%d ", i);
+                fprintf(graphViz, "-> %d\n", i + 1);
+            }
+            fprintf(graphViz, "\t}\n");
+            fprintf(graphViz, "\n");
+
+            for (i = 1; i < list->capacity; i++)
+            {
+                if (list->data[i].next != 0 && list->data[i].prev != -1)
+                {
+                    fprintf(graphViz, "\t%d : %d ", i, list->data[i].next);
+                    fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"next\", fontsize=12, constraint=false]\n", list->data[i].next, list->data[list->data[i].next].next);
+                }
+                if (list->data[i].next != 0 && list->data[i].prev == -1)
+                {
+                    fprintf(graphViz, "\t%d : %d ", i, list->data[i].next);
+                    fprintf(graphViz, "-> %d : %d[color=\"green\", label=\"free next\", fontsize=12, constraint=false]\n", list->data[i].next, list->data[list->data[i].next].next);
+                }
             }
             fprintf(graphViz, "\n");
 
-            int tail = list->tail;
-            while (tail != 0)
+            for (i = 1; i < list->capacity; i++)
             {
-                fprintf(graphViz, "\t%d : %d ", tail, list->data[tail].prev);
-                tail = list->data[tail].prev;
-                fprintf(graphViz, "->%d : %d[color=\"blue\", label=\"prev\", fontsize=8];\n", tail, list->data[tail].prev);
+                if (list->data[i].prev != -1 && list->data[i].prev != 0)
+                {
+                    fprintf(graphViz, "\t%d : %d ", i, list->data[i].prev);
+                    fprintf(graphViz, "-> %d : %d[color=\"blue\", label=\"prev\", fontsize=12, constraint=false]\n", list->data[i].prev, list->data[list->data[i].prev].prev);
+                }
             }
             fprintf(graphViz, "\n");
         }
@@ -244,7 +273,7 @@ ListErrorCode ListDump(const List_t *list)
     fclose(logFile);
 }
 
-ListErrorCode ListConvertLogicalToPhysNum(List_t *list)
+ListErrorCode ListLinearization(List_t *list)
 {
     assert(list != nullptr);
 
@@ -300,6 +329,30 @@ ListErrorCode ListConvertLogicalToPhysNum(List_t *list)
     #endif // DEBUG
 
     return LIST_NO_ERROR;
+}
+
+int ListConvertLogicalForPhysNum(const List_t *list, const int place, ListErrorCode *listError)
+{
+    if (place > list->size)
+    {
+        return -1;
+    }
+
+    if (list->isSorted == 1)
+    {
+        if (list->data[place].prev != -1)
+            return place;
+        else
+            return list->head;
+    }
+
+    int curPlace = list->head;
+    for (int i = 1; i < place; i++)
+    {
+        curPlace = list->data[curPlace].next;
+    }
+
+    return curPlace;
 }
 
 static ListErrorCode ListResizeUp(List_t *list)
@@ -470,7 +523,6 @@ ListErrorCode ListRemove(List_t *list, structElemT *elem, const int place)
         {
             list->head = list->data[place].next;
         }
-        list->isSorted = 0;
     }
     else
     {

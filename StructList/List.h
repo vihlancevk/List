@@ -58,7 +58,9 @@ ListErrorCode ListDtor(List_t *list);
 
 ListErrorCode ListDump(const List_t *list);
 
-ListErrorCode ListConvertLogicalToPhysNum(List_t *list);
+ListErrorCode ListLinearization(List_t *list);
+
+int ListConvertLogicalForPhysNum(const List_t *list, const int place, ListErrorCode *listError);
 
 ListErrorCode ListInsertAfter(List_t *list, int *physNum, const structElemT elem, const int place);
 

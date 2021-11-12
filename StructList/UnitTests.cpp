@@ -114,7 +114,7 @@ ListErrorCode UnitTestForListResizeUp()
     return LIST_NO_ERROR;
 }
 
-ListErrorCode UnitTestForListConvertLogicalToPhysNum()
+ListErrorCode UnitTestForListLinearization()
 {
     List_t list = {};
 
@@ -125,7 +125,7 @@ ListErrorCode UnitTestForListConvertLogicalToPhysNum()
         IS_LIST_ERROR_(&list, LIST_INSERT_AT_END_(&list, &physNum, i * 10));
     }
     IS_LIST_ERROR_(&list, ListInsertAfter(&list, &physNum, 60, 2));
-    IS_LIST_ERROR_(&list, ListConvertLogicalToPhysNum(&list));
+    IS_LIST_ERROR_(&list, ListLinearization(&list));
 
     IS_LIST_ERROR_(&list, ListDtor(&list));
 
