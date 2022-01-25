@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "List.h"
+#include "../libs/List.h"
 
 #define DEBUG
 
@@ -24,8 +24,8 @@ const int LIST_RESIZE_UP_COEFFICIENT = 2;
 const int LIST_CMD_MAX_SIZE = 1000;
 const int POISON = -(1000 - 7);
 const void *const ERR_PTR = (void*)666;
-const char *LIST_LOG_FILE = "listLog.html";
-const char *LIST_GRAPH_VIZ = "/home/kostya/StructList/graphviz.gv";
+const char *LIST_LOG_FILE = "../res/listLog.html";
+const char *LIST_GRAPH_VIZ = "../res/graphviz.gv";
 
 static int IsListCycle(const List_t *list)
 {
@@ -260,9 +260,9 @@ ListErrorCode ListDump(const List_t *list)
 
     static int cntImg = 1;
     char *str = (char*)calloc(LIST_CMD_MAX_SIZE, sizeof(char));
-    sprintf(str, "%s%d%s", "dot -Tpng /home/kostya/StructList/graphviz.gv -o /home/kostya/StructList/graphviz/graphviz", cntImg, ".png");
+    sprintf(str, "%s%d%s", "dot -Tpng ../res/graphviz.gv -o ../res/graphviz/graphviz", cntImg, ".png");
     system(str);
-    sprintf(str, "%s%d%s", "<img src =\"/home/kostya/StructList/graphviz/graphviz", cntImg, ".png\"><br>");
+    sprintf(str, "%s%d%s", "<img src =\"../res/graphviz/graphviz", cntImg, ".png\"><br>");
     fprintf(logFile, "%s", str);
     cntImg = cntImg + 1;
     free(str);

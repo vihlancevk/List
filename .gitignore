@@ -1,0 +1,7 @@
+res/graphviz/
+res/graphviz.gv
+src/bin/
+src/obj/
+src/StructList.cbp
+src/StructList.depend
+src/StructList.layout
