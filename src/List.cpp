@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "../libs/List.h"
+#include "../include/List.h"
 
 #define DEBUG
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "../libs/List.h"
-#include "../libs/UnitTests.h"
+#include "../include/List.h"
+#include "../include/UnitTests.h"
 
 int main()
 {
